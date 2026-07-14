@@ -1,0 +1,60 @@
+name: Supabase migrations & deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  migrate-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install supabase CLI
+        run: npm install -g supabase
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations or script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+        run: |
+          echo "Checking for npm migrate script..."
+          if npm run | grep -q 'migrate:supabase'; then
+            npm run migrate:supabase
+          else
+            echo "No migrate:supabase script. Attempting supabase db push if ./supabase exists"
+            if [ -d "./supabase" ]; then
+              # Try a generic db push; adjust --project-ref or flags if needed for your setup
+              supabase db push || echo "supabase db push failed — adjust CLI flags or use a repo script"
+            else
+              echo "No supabase folder found; skipping db push"
+            fi
+          fi
+
+      - name: Deploy functions (optional)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+        run: |
+          if [ -d "./functions" ]; then
+            echo "Deploying Supabase Edge Functions (adjust as needed)"
+            # Replace with your project-specific deploy command
+            supabase functions deploy || echo "Function deploy failed — adjust command"
+          else
+            echo "No functions folder; skipping"
+          fi
+
+      - name: Post-checks
+        run: |
+          echo "Migration job finished. Review workflow logs for details."
