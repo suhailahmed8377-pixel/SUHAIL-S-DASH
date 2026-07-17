@@ -1,13 +1,18 @@
 {
   "name": "suhail-s-dash",
   "version": "1.0.0",
-  "description": "Dashboard application",
-  "main": "index.js",
+  "description": "Real-time AI ERP Dashboard",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 0"
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && node --watch server.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && node server.js",
+    "db:setup": "cd backend && node scripts/setupDb.js",
+    "db:seed": "cd backend && node scripts/seedDb.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {}
+  "devDependencies": {
+    "concurrently": "^8.2.1"
+  }
 }
